@@ -1,0 +1,5 @@
+Q01A	0	rwh-mastitis	2
+Q01B	0	rwh-mastitis	2
+Q02A	0	rwh-mastitis	2
+Q03A	0	rwh-mastitis	1
+Q03A	0	rwh-caesarean-home	1

@@ -1,0 +1,7 @@
+question_id,topic_id,variation_of,type,question,gold_answer,notes
+Q01A,T01,,known,What are the signs of mastitis?,"A red painful area on the breast, flu-like symptoms, and a fever above 38.5 degrees.",direct from RWH mastitis fact sheet
+Q01B,T01,Q01A,known,How do I know if I have mastitis?,"A red painful area on the breast, flu-like symptoms, and a fever above 38.5 degrees.",paraphrase of Q01A
+Q02A,T02,,known,When should I contact my midwife about breast pain?,"Immediately if you have a fever, severe pain, or symptoms not improving within 24 hours.",
+Q03A,T03,,inferred,"I had a caesarean and my breast is red and sore — who do I call?","Combines caesarean discharge guidance with mastitis escalation advice.",needs 2+ documents
+Q04A,T04,,out_of_kb,Can I take ibuprofen while breastfeeding?,I don't have that information — ask your midwife or pharmacist.,in-domain but not in KB; dosage advice
+Q05A,T05,,out_of_kb,How much does a lactation consultant cost in Melbourne?,I don't have that information.,plausible but not covered

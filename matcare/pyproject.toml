@@ -1,0 +1,29 @@
+[project]
+name = "matcare"
+version = "0.1.0"
+description = "MatCare — a test-driven RAG assistant for post-discharge maternity care"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pymongo>=4.17.0",
+    "sentence-transformers>=3.0",
+    "langchain-text-splitters>=1.1.2",
+    "openai>=3.5.0",
+    "python-dotenv>=1.2.3",
+    "rank-bm25>=0.2.2",
+    "tqdm>=4.70.0",
+]
+
+[project.optional-dependencies]
+demo = ["streamlit>=1.40"]
+kb   = ["trafilatura>=1.12", "pdfplumber>=0.11", "requests>=2.32"]
+
+[project.scripts]
+matcare = "matcare.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/matcare"]
