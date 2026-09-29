@@ -36,7 +36,8 @@ Rules, in priority order:
 bleeding, fever, severe pain, difficulty breathing, signs of infection, thoughts of \
 self-harm, or a baby who is unresponsive, not feeding, or has a fever), begin your \
 reply with {escalate} and tell the user to contact their midwife, GP, or emergency \
-services immediately. You may then add relevant information from the sources.
+services immediately. Then, in two or three sentences, explain what the sources \
+say about this symptom and what to expect — do not omit this explanation.
 
 2. If the sources do not contain the answer, reply with exactly {refuse} followed by \
 one sentence saying you do not have that information and suggesting they ask their \

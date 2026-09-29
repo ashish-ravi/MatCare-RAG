@@ -150,6 +150,7 @@ is shared.** The only way five people get the same knowledge base is by all runn
 | Connection timeout to MongoDB | missing `?directConnection=true`, or wrong port | Re-run `atlas local connect matcare --connectWith connectionString` |
 | `could not connect to ollama server` | Ollama not serving | `ollama serve` |
 | `Model 'gemma4:e4b' not found` | model not pulled | `ollama pull gemma4:e4b` |
+| `AttributeError: 'NoneType' object has no attribute '__name__'` when loading the embedding model | `transformers` 5.x incompatible with voyage-4-nano's remote code | `uv sync` after pulling — the versions are pinned in `pyproject.toml`. If you already have a broken venv: `uv pip install "sentence-transformers>=5,<6" "transformers>=4.51,<5"` |
 | Vector index stuck `PENDING` | mongot still building | Wait — it can take 60s on first build |
 | `knowledge base not found` | KB team hasn't delivered yet | See `data/kb/README.md` |
 

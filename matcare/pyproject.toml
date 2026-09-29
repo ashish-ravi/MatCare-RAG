@@ -6,7 +6,13 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "pymongo>=4.17.0",
-    "sentence-transformers>=3.0",
+    # PINNED, do not loosen. voyage-4-nano ships custom remote code whose model
+    # class does not set `config_class`. transformers 5.x dereferences that field
+    # in AutoModel.register() and dies with:
+    #   AttributeError: 'NoneType' object has no attribute '__name__'
+    # sentence-transformers 6.x hard-requires transformers>=5, so both are pinned.
+    "sentence-transformers>=5,<6",
+    "transformers>=4.51,<5",
     "langchain-text-splitters>=1.1.2",
     "openai>=3.5.0",
     "python-dotenv>=1.2.3",
