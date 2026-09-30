@@ -23,35 +23,101 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from .config import SETTINGS
 from .schema import Chunk, Document
 
-# Markdown headings, or a short ALL-CAPS / Title-Case line on its own.
-_HEADING = re.compile(
-    r"^(?:#{1,6}\s+(?P<md>.+)|(?P<bare>[A-Z][^\n.!?]{2,70}))\s*$",
-    re.MULTILINE,
+# Markdown headings — the reliable signal.
+_MD_HEADING = re.compile(r"^#{1,6}\s+(.+?)\s*$", re.MULTILINE)
+
+# Fallback for documents with no markdown structure: a short line on its own
+# that looks like a title.
+_BARE_HEADING = re.compile(r"^(?P<bare>[A-Z][^\n.!?]{2,70})\s*$", re.MULTILINE)
+
+# A "heading" ending in one of these is really a wrapped sentence fragment.
+# PDF extraction produces plenty of these — e.g. "Women's Emergency Department (see"
+# or "Emergency Department if you notice any of" — and promoting them to section
+# titles both creates junk chunks and orphans the text that followed.
+_DANGLING = re.compile(
+    r"(?:[,;:(\[]|\b(?:a|an|the|and|or|but|if|of|to|for|with|from|in|on|at|by|as|"
+    r"is|are|was|were|be|been|any|all|your|our|their|this|that|these|those|"
+    r"than|then|when|while|which|who|whom|whose|into|onto|upon)\s*)$",
+    re.IGNORECASE,
 )
+
+# Sections shorter than this are folded into the preceding section rather than
+# becoming chunks of their own. A three-word chunk cannot answer anything, and
+# it usually means a heading got separated from its own body text.
+MIN_SECTION_WORDS = 12
+
+
+def _is_plausible_heading(text: str) -> bool:
+    t = text.strip()
+    if not t or len(t.split()) > 14:
+        return False
+    return not _DANGLING.search(t)
+
+
+def _find_headings(body: str) -> list[tuple[int, int, str]]:
+    """Return (start, end, heading_text) for each heading, in document order.
+
+    Markdown headings win outright. The bare-line heuristic is used only when a
+    document has essentially no markdown structure, because on a PDF-extracted
+    body it produces far more false positives than real headings.
+    """
+    md = [(m.start(), m.end(), m.group(1).strip()) for m in _MD_HEADING.finditer(body)]
+    if len(md) >= 2:
+        return md
+
+    bare = [
+        (m.start(), m.end(), m.group("bare").strip())
+        for m in _BARE_HEADING.finditer(body)
+        if _is_plausible_heading(m.group("bare"))
+    ]
+    return sorted(md + bare)
 
 
 def split_sections(body: str) -> list[tuple[str | None, str]]:
     """Split a document body into (heading, text) pairs.
 
-    Text before the first heading is returned with heading=None.
+    Text before the first heading is returned with heading=None. Sections whose
+    body is shorter than MIN_SECTION_WORDS are merged into the previous section,
+    keeping their heading inline so nothing is lost.
     """
-    matches = list(_HEADING.finditer(body))
-    if not matches:
+    headings = _find_headings(body)
+    if not headings:
         return [(None, body.strip())]
 
-    sections: list[tuple[str | None, str]] = []
-    preamble = body[: matches[0].start()].strip()
+    raw: list[tuple[str | None, str]] = []
+    preamble = body[: headings[0][0]].strip()
     if preamble:
-        sections.append((None, preamble))
+        raw.append((None, preamble))
 
-    for i, m in enumerate(matches):
-        heading = (m.group("md") or m.group("bare") or "").strip()
-        start = m.end()
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(body)
-        text = body[start:end].strip()
-        if text:
-            sections.append((heading, text))
-    return sections
+    for i, (_s, end, heading) in enumerate(headings):
+        nxt = headings[i + 1][0] if i + 1 < len(headings) else len(body)
+        text = body[end:nxt].strip()
+        raw.append((heading, text))
+
+    return _merge_short_sections(raw)
+
+
+def _merge_short_sections(
+    sections: list[tuple[str | None, str]],
+    min_words: int = MIN_SECTION_WORDS,
+) -> list[tuple[str | None, str]]:
+    out: list[tuple[str | None, str]] = []
+    for heading, text in sections:
+        too_short = len(text.split()) < min_words
+        if too_short and out:
+            prev_h, prev_t = out[-1]
+            joined = f"{prev_t}\n\n{heading}\n{text}".strip() if heading else f"{prev_t}\n\n{text}".strip()
+            out[-1] = (prev_h, joined)
+        else:
+            out.append((heading, text))
+
+    # A leading short section has no predecessor to merge into; push it forward.
+    if len(out) > 1 and len(out[0][1].split()) < min_words:
+        h0, t0 = out[0]
+        h1, t1 = out[1]
+        merged = f"{h0}\n{t0}\n\n{t1}".strip() if h0 else f"{t0}\n\n{t1}".strip()
+        out = [(h1, merged)] + out[2:]
+    return out
 
 
 def chunk_document(

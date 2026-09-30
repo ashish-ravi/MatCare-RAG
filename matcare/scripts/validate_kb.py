@@ -20,6 +20,22 @@ OPTIONAL = ["updated", "format", "metadata"]
 
 MIN_BODY_WORDS = 40
 
+# A closed vocabulary, matching the groupings in the report appendix. Enforced,
+# not merely required: the first delivery labelled all 27 documents
+# "Postnatal recovery and going home" and passed with zero warnings, because
+# the check only asked whether the field was present.
+VALID_CATEGORIES = {
+    "Postnatal recovery and going home",
+    "Wound and perineal care",
+    "Feeding and breastfeeding",
+    "Newborn care and safe sleep",
+    "Warning signs and complications",
+}
+
+# If one category holds more than this share of the corpus, it is more likely a
+# labelling shortcut than a real distribution.
+CATEGORY_SKEW_WARN = 0.60
+
 
 def validate(path: Path) -> int:
     try:
@@ -68,8 +84,14 @@ def validate(path: Path) -> int:
             warnings.append(f"{where}: contains replacement characters (encoding issue)")
 
         meta = d.get("metadata") or {}
-        if not meta.get("category"):
+        cat = meta.get("category")
+        if not cat:
             warnings.append(f"{where}: metadata.category missing (used for reporting)")
+        elif cat not in VALID_CATEGORIES:
+            errors.append(
+                f"{where}: category {cat!r} is not one of the five valid values. "
+                f"Valid: {sorted(VALID_CATEGORIES)}"
+            )
         if not meta.get("retrieved"):
             warnings.append(f"{where}: metadata.retrieved missing (provenance date)")
 
@@ -79,6 +101,15 @@ def validate(path: Path) -> int:
         print(f"  body words: min {min(wl)} / median {sorted(wl)[len(wl)//2]} / max {max(wl)}")
         cats = Counter((d.get("metadata") or {}).get("category", "<none>") for d in docs)
         print("  categories: " + ", ".join(f"{k} ({v})" for k, v in cats.most_common()))
+        top_cat, top_n = cats.most_common(1)[0]
+        if len(docs) >= 10 and top_n / len(docs) > CATEGORY_SKEW_WARN:
+            warnings.append(
+                f"{top_n}/{len(docs)} documents are in one category ({top_cat!r}) — "
+                f"check these were categorised individually, not in bulk"
+            )
+        missing_cats = VALID_CATEGORIES - set(cats)
+        if missing_cats:
+            warnings.append(f"no documents in: {sorted(missing_cats)}")
         srcs = Counter(d.get("sourceName", "<none>") for d in docs)
         print("  publishers: " + ", ".join(f"{k} ({v})" for k, v in srcs.most_common()))
 
