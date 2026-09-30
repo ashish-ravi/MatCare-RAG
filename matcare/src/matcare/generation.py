@@ -15,6 +15,7 @@ rather than judged by eye.
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 
@@ -25,6 +26,12 @@ from .schema import Hit
 
 REFUSAL_MARKER   = "NO_ANSWER"
 ESCALATION_MARKER = "SEEK_CARE"
+
+# Cosine similarity below which a retrieved passage is not cited, even though it
+# was passed to the model as context. This is a reported parameter, not a magic
+# number: raising it trades citation recall for citation precision, and
+# evaluation.metrics.attribution_precision is how we choose it.
+CITATION_SCORE_FLOOR = float(os.environ.get("CITATION_SCORE_FLOOR", 0.55))
 
 SYSTEM_PROMPT = """You are MatCare, an assistant for parents who have recently been \
 discharged from hospital after giving birth. You answer only from the provided \
@@ -59,13 +66,29 @@ class Answer:
 
     @property
     def citations(self) -> list[dict]:
-        """Unique sources behind this answer, in retrieval order."""
+        """Unique sources actually standing behind this answer.
+
+        Two rules, both learned from watching real output:
+
+        1. A refusal cites nothing. "I don't have that information" followed by
+           four source links is incoherent, and it manufactures exactly the
+           false trust the refusal behaviour exists to prevent.
+
+        2. Only hits above CITATION_SCORE_FLOOR are cited. Retrieval always
+           returns k results whether or not they are relevant, so a question
+           about caesarean stitches was citing a fact sheet on newborn belly
+           buttons purely because it came back fifth. An authoritative-looking
+           but irrelevant citation is worse than none.
+        """
+        if self.refused:
+            return []
         seen, out = set(), []
         for h in self.hits:
-            if h.doc_id in seen:
+            if h.score < CITATION_SCORE_FLOOR or h.doc_id in seen:
                 continue
             seen.add(h.doc_id)
-            out.append({"title": h.title, "url": h.url, "source": h.source_name})
+            out.append({"title": h.title, "url": h.url,
+                        "source": h.source_name, "score": round(h.score, 4)})
         return out
 
 

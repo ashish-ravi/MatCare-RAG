@@ -45,10 +45,13 @@ def embed_chunks(chunks: list[Chunk]) -> list[Chunk]:
 
 
 def ingest(rebuild_index: bool = True) -> int:
+    # Cheap checks before expensive ones. Embedding 567 chunks takes ~11s; a
+    # dead MongoDB connection is knowable in milliseconds. Doing it the other
+    # way round meant a wrong port wasted the whole embedding pass.
     docs = load_documents()
-    chunks = embed_chunks(build_chunks(docs))
-
     coll, _ = collections()
+
+    chunks = embed_chunks(build_chunks(docs))
     coll.delete_many({})
     coll.insert_many([c.to_mongo() for c in chunks])
     print(f"  inserted {coll.count_documents({})} chunks into "

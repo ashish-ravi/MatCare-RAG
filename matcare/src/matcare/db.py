@@ -66,9 +66,9 @@ def wait_for_index(coll: Collection, name: str, timeout: int = 180) -> None:
     while time.time() < deadline:
         idx = list(coll.list_search_indexes(name=name))
         status = idx[0].get("status", "PENDING") if idx else "PENDING"
-        print(f"  index status: {status}", end="\r", flush=True)
+        print(f"  index status: {status:<12}", end="\r", flush=True)
         if status == "READY":
-            print(f"\n  index '{name}' ready")
+            print(f"  index '{name}' ready        ")
             return
         time.sleep(5)
     raise TimeoutError(f"index '{name}' not READY within {timeout}s")
