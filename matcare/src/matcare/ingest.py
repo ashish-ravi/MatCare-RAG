@@ -25,7 +25,7 @@ def load_documents(path: Path = KB_FILE) -> list[Document]:
             f"knowledge base not found: {path}\n"
             f"The KB team produces this file — see docs/KNOWLEDGE_BASE_SPEC.md"
         )
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         raw = json.load(f)
     return [Document.from_json(d) for d in raw]
 
