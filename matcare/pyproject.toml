@@ -18,10 +18,12 @@ dependencies = [
     "python-dotenv>=1.2.3",
     "rank-bm25>=0.2.2",
     "tqdm>=4.70.0",
+    # Chat interface. A main dependency rather than an extra: `uv sync` removes
+    # extras that are not requested, so teammates would silently lose the demo.
+    "streamlit>=1.40",
 ]
 
 [project.optional-dependencies]
-demo = ["streamlit>=1.40"]
 kb   = ["trafilatura>=1.12", "pdfplumber>=0.11", "requests>=2.32"]
 
 [project.scripts]

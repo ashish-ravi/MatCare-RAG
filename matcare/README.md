@@ -116,17 +116,29 @@ uv run matcare eval --system both
 
 ---
 
-## Who builds what
+## Chat interface
 
-| Component | Owner | Contract |
-|---|---|---|
-| Knowledge base (`data/kb/matcare_docs.json`) | KB team | [`docs/KNOWLEDGE_BASE_SPEC.md`](docs/KNOWLEDGE_BASE_SPEC.md) |
-| Test collection (`data/eval/`) | Evaluation team | [`docs/TEST_COLLECTION_SPEC.md`](docs/TEST_COLLECTION_SPEC.md) |
-| Pipeline + harness (`src/matcare/`) | Pipeline team | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+```bash
+uv run streamlit run app.py
+```
 
-The two specs are deliberately written as **contracts**: if `scripts/validate_kb.py`
-passes, ingestion will work, and the three teams can work in parallel without blocking
-each other.
+Opens at http://localhost:8501. Docker, the `matcare` deployment and Ollama must be
+running, and the knowledge base ingested — the page tells you which one isn't.
+
+- The sidebar has four example questions chosen for the demo: a plain question,
+  everyday wording, a warning sign (red banner) and one the fact sheets don't cover
+  (refused, no sources).
+- **Show how it found this** reveals the passages each answer was built from, with
+  their similarity scores — useful for explaining the system, off by default.
+- Each question is answered on its own. Follow-up questions are not supported yet
+  (see the backlog: query rewriting).
+- The first answer after starting Ollama takes ~20–30 s while the model loads.
+  Ask one warm-up question before recording a demo.
+- Streamlit's anonymous usage statistics are switched off in
+  `.streamlit/config.toml`, so nothing leaves the machine.
+
+---
+
 
 ```bash
 python scripts/validate_kb.py data/kb/matcare_docs.json
@@ -138,7 +150,7 @@ python scripts/validate_kb.py data/kb/matcare_docs.json
 
 Each team member runs their own Local Atlas container with its own data volume. **Nothing
 is shared.** The only way five people get the same knowledge base is by all running
-`matcare ingest` against the same committed `matcare_docs.json`. Never load data by hand.
+`matcare ingest` against the same committed `matcare_docs.json`. 
 
 ---
 
@@ -176,6 +188,7 @@ matcare/
 │       ├── runs.py      TREC run format
 │       ├── metrics.py   nDCG, refusal, attribution
 │       └── evaluate.py  orchestration + reporting
+├── app.py               chat interface (Streamlit)
 ├── data/kb/             knowledge base (KB team)
 ├── data/eval/           test collection (evaluation team)
 ├── scripts/             validators

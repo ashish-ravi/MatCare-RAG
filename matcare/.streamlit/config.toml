@@ -1,0 +1,11 @@
+[browser]
+# Streamlit sends anonymous usage statistics by default. Off, so that
+# "no question leaves the machine" is literally true of the whole app.
+gatherUsageStats = false
+
+[client]
+# Hide the Deploy menu and developer options — cleaner for the demo video.
+toolbarMode = "minimal"
+
+[theme]
+primaryColor = "#B4547A"
