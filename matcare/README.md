@@ -6,17 +6,14 @@ Answers come **only** from curated Australian maternity fact sheets, with source
 When the sources don't cover a question, the system says so rather than guessing — and
 when a question describes a warning sign, it directs the user to a clinician.
 
-Everything runs locally. No API keys, no cost.
-
-> **The point of this project is not the pipeline.** A working RAG pipeline is necessary
-> but not sufficient. The claim we have to substantiate is that MatCare adds measurable
+> The claim we have to substantiate is that MatCare adds measurable
 > value, which is what [`src/matcare/evaluation/`](src/matcare/evaluation/) is for.
 
 ---
 
 ## Setup
 
-Five steps. Steps 1–3 are one-time; budget ~20 minutes including downloads.
+Five steps. Steps 1–3 are one-time; ~20 minutes including downloads.
 
 ### 1. Docker Desktop
 
